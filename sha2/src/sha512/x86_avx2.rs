@@ -323,6 +323,14 @@ fn_sha512_update_x!(sha512_update_x_avx2, "avx2", __m256i, {
 #[inline]
 #[target_feature(enable = "sse4.1")]
 fn extract_u64(a: __m128i) -> [u64; 2] {
+    #[cfg(target_arch = "x86")]
+    {
+        let mut words = [0u64; 2];
+        // SAFETY: `words` has space for all 16 bytes and the store permits unaligned pointers.
+        unsafe { _mm_storeu_si128(words.as_mut_ptr().cast(), a) };
+        words
+    }
+    #[cfg(target_arch = "x86_64")]
     [
         _mm_extract_epi64::<0>(a).cast_unsigned(),
         _mm_extract_epi64::<1>(a).cast_unsigned(),
